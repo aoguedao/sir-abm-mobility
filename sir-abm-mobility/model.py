@@ -4,7 +4,7 @@ import mesa_geo as mg
 import numpy as np
 import pandas as pd
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from agents import PersonAgent, TractAgent
