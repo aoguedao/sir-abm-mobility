@@ -5,6 +5,7 @@ import pandas as pd
 import geopandas as gpd
 
 from pyproj import CRS
+from scipy.stats import poisson
 from shapely.geometry import Point
 from typing import Any
 
@@ -117,6 +118,7 @@ class PersonAgent(mg.GeoAgent):
     self.tract = self._tract
     self._status = status
     self._decision = None
+    self._n_trips = None
     self.steps_in_status = 0  # Since the last time it changed status
 
 
@@ -138,9 +140,11 @@ class PersonAgent(mg.GeoAgent):
     # Take decision
     if self.random.random() < self.tract.prob_stay_at_home:
       self.decision = Decision.STAY_HOME
+      self.n_trips = 0
       self.tract.n_stay_at_home += 1
     else:
       self.decision = Decision.GO_OUT
+      self.n_trips = self.decide_n_trips()
       self.move_to_next_tract()
 
   def afternoon_step(self):
@@ -158,6 +162,7 @@ class PersonAgent(mg.GeoAgent):
         self.move_to_next_tract()
 
   def move_to_next_tract(self, method='uniform'):
+
     next_tract_code = self.tract.choose_next_tract_code()
     self.tract = self.model.code_tract_dict[next_tract_code]
     next_pos = self.tract.sample_points(n=1, method=method).iat[0]
@@ -226,3 +231,19 @@ class PersonAgent(mg.GeoAgent):
     if value not in Decision:
       raise TypeError(f'Decision must be a Decision member: {Decision._member_names_}')
     self._decision = value
+
+  @property
+  def n_trips(self):
+    return self._n_trips
+
+  @n_trips.setter
+  def n_trips(self, value):
+    if not isinstance(value, int):
+      raise TypeError(f'Number of trips must be an integer.')
+    self._n_trips = value
+
+  def decide_n_trips(self):
+    while True:
+      n_trips = poisson.rvs(self.model.avg_trips)  # Poisson distribution
+      if n_trips != 0:  # At least one trip
+        return n_trips

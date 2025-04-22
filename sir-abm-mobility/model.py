@@ -18,6 +18,7 @@ class GeoSIR(mesa.Model):
     infection_params: dict,
     initial_condition: dict,
     exposure_distance: float,
+    avg_trips: float,
     tracts_df: gpd.GeoDataFrame,
     agents_tract_df: pd.DataFrame,
     prob_stay_at_home_data: pd.Series,
@@ -25,12 +26,15 @@ class GeoSIR(mesa.Model):
     flow_path: Path,
     min_date: date = None,
     max_date: date = None,
-    seed: int = None,
+    # seed: int = None,
+    rng=None
   ):
-    super().__init__(seed=seed)
+    # super().__init__(seed=seed)
+    super().__init__(rng=rng)
     self.infect_params = infection_params
     self.initial_condition = initial_condition
     self.exposure_distance = exposure_distance
+    self.avg_trips = avg_trips
     self.tracts_df = tracts_df
     self.agents_tract_df = agents_tract_df
     self.prob_stay_at_home_data = prob_stay_at_home_data
