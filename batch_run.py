@@ -6,8 +6,8 @@ import geopandas as gpd
 
 from pathlib import Path
 
-from model import GeoSIR
-from utils import InfecStatus
+from sir_abm_mobility.model import GeoSIR
+from sir_abm_mobility.utils import InfecStatus
 
 
 MAX_STEPS = 10
@@ -18,34 +18,15 @@ if __name__ == '__main__':
   data_path = Path(__file__).resolve().parent / 'data'
   images_path = Path(__file__).resolve().parent / 'images'
   images_path.mkdir(exist_ok=True)
+  output_path = Path(__file__).resolve().parent / 'output'
+  output_path.mkdir(exist_ok=True)
   flow_path = data_path / 'flow'
 
-  # Data
-  tracts_df = gpd.read_file(data_path / 'tracts.shp').to_crs(epsg=3857)
-  agents_tract_df = pd.read_csv(data_path / 'agents_tract.csv')
-  prob_stay_at_home_data = (
-    pd.read_csv(
-      data_path / 'agents_home.csv',
-      parse_dates=['date'],
-      date_format='%Y-%m-%d'
-    )
-    .assign(date=lambda x: x['date'].dt.date)
-    .set_index(['date', 'tract'])
-    .squeeze()
-  )
-  percentage_time_at_home_data = (
-    pd.read_csv(
-      data_path / 'agents_percentage_home.csv',
-      parse_dates=['date'],
-      date_format='%Y-%m-%d'
-    )
-    .assign(
-      date=lambda x: x['date'].dt.date,
-      percentage_time_home=lambda x: x['percentage_time_home'] / 100
-    )
-    .set_index(['date', 'tract'])
-    .squeeze()
-  )
+  tracts_filepath = data_path / 'tracts.shp'
+  agents_tract_filepath = data_path / 'agents_tract.csv'
+  prob_stay_at_home_filepath = data_path / 'agents_home.csv'
+  percentage_time_at_home_filepath = data_path / 'agents_percentage_home.csv'
+  epsg = 3857
 
   # Model
   infection_params = {
@@ -63,13 +44,14 @@ if __name__ == '__main__':
   parameters = {
     "infection_params": [infection_params],
     "initial_condition": [initial_condition],
-    "exposure_distance": range(1, 2),
+    "exposure_distance": exposure_distance,
     "avg_trips": avg_trips,
-    "tracts_df": [tracts_df],
-    "agents_tract_df": [agents_tract_df],
-    "prob_stay_at_home_data": [prob_stay_at_home_data],
-    "percentage_time_at_home_data": [percentage_time_at_home_data],
-    "flow_path": [flow_path],
+    "tracts_filepath": tracts_filepath,
+    "agents_tract_filepath": agents_tract_filepath,
+    "prob_stay_at_home_filepath": prob_stay_at_home_filepath,
+    "percentage_time_at_home_filepath": percentage_time_at_home_filepath,
+    "flow_path": flow_path,
+    "epsg": epsg,
   }
 
   results = mesa.batch_run(
@@ -80,3 +62,6 @@ if __name__ == '__main__':
     data_collection_period=1,
     number_processes=None,
   )
+  # %%
+  results_df = pd.DataFrame(results)
+  results_df.to_csv(output_path / "results.csv")
