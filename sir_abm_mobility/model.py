@@ -13,7 +13,7 @@ from .utils import InfecStatus, TimeBlock, Decision
 
 class GeoSIR(mesa.Model):
 
-  PERC_POPULATION = 1.0
+  PERC_POPULATION = 0.1
 
   def __init__(
     self,
@@ -36,6 +36,7 @@ class GeoSIR(mesa.Model):
     super().__init__(rng=rng)
     self.infect_params = infection_params
     self.initial_condition = initial_condition
+    self.recovery_steps = 1 / (self.infect_params['gamma'] * len(TimeBlock))
     self.exposure_distance = exposure_distance
     self.avg_trips = avg_trips
     self.tracts_filepath = tracts_filepath
@@ -188,17 +189,15 @@ class GeoSIR(mesa.Model):
   def _read_flow(self, flow_date):
     flow_df = (
       pd.read_csv(self.flow_filepaths[flow_date])
+      .query('origin != destination')
       .pivot(index='origin', columns='destination', values='flow_ratio')
+      .fillna(0)
     )
     return flow_df
 
 
   def reset_counts(self):
     self.counts = {status: 0 for status in InfecStatus}
-
-
-  def update_disease(self):
-    pass
 
 
   def update_date_and_timeblock(self):

@@ -44,10 +44,14 @@ class TractAgent(mg.GeoAgent):
     self.prob_flow = self.model.flow.loc[self.code, :].to_dict()
 
   def choose_next_tract_code(self):
-    next_tract_id = self.random.choices(
-      list(self.prob_flow.keys()),
-      weights=list(self.prob_flow.values())
-    )
+    try:
+      next_tract_id = self.random.choices(
+        list(self.prob_flow.keys()),
+        weights=list(self.prob_flow.values())
+      )
+    except:
+      print(self.code)
+      print(self.model.today)
     return next_tract_id[0]
 
   def sample_points(self, n=1, method='uniform', **kwargs):
@@ -162,11 +166,11 @@ class PersonAgent(mg.GeoAgent):
         self.move_to_next_tract()
 
   def move_to_next_tract(self, method='uniform'):
-
     next_tract_code = self.tract.choose_next_tract_code()
     self.tract = self.model.code_tract_dict[next_tract_code]
     next_pos = self.tract.sample_points(n=1, method=method).iat[0]
     self.geometry = next_pos
+    self.n_trips -= 1
 
   def move_to_home(self):
     self.geometry = self.home_pos
@@ -187,13 +191,10 @@ class PersonAgent(mg.GeoAgent):
           ):
             self.status = InfecStatus.I
             self.steps_in_status = 0
-            break  # stop process if agent becomes infected
-        if self.status is InfecStatus.S:
-          self.steps_in_status += 1
+            break  # Stop process if person becomes infected
       # Infected
       case InfecStatus.I:
-        recovery_steps = 1 / self.model.infect_params['gamma'] * len(InfecStatus)  # Each day
-        if self.steps_in_status >= recovery_steps:
+        if self.steps_in_status >= self.model.recovery_steps:
           self.status = InfecStatus.R
           self.steps_in_status = 0
         else:

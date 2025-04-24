@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --partition=normal
 #SBATCH --job-name=sir_abm_mobility
-#SBATCH --output sir_abm_mobility_%A_%a.out
-#SBATCH --error sir_abm_mobility_%A_%a.err
+#SBATCH --output sir_abm_mobility_%j.out
+#SBATCH --error sir_abm_mobility_%j.err
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem-per-cpu=4GB
@@ -14,8 +14,7 @@
 set echo
 umask 0027
 
-module load gnu10
-module load python
+module load gnu12
 source ~/ds-geo/bin/activate
 
 python batch_run.py
