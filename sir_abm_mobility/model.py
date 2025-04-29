@@ -13,8 +13,6 @@ from .utils import InfecStatus, TimeBlock, Decision
 
 class GeoSIR(mesa.Model):
 
-  PERC_POPULATION = 0.1
-
   def __init__(
     self,
     infection_params: dict,
@@ -30,6 +28,7 @@ class GeoSIR(mesa.Model):
     min_date: date = None,
     max_date: date = None,
     # seed: int = None,
+    population_percentage: float=1.0,
     rng=None
   ):
     # super().__init__(seed=seed)
@@ -54,6 +53,7 @@ class GeoSIR(mesa.Model):
     self.current_flow_date = None
     self.next_flow_date = None
     self.flow = None
+    self.population_percentage = population_percentage
     self.counts = {}
     self.running = True
 
@@ -162,7 +162,7 @@ class GeoSIR(mesa.Model):
   def init_population(self):
     print("Initializing Population")
     for tract in self._agents_by_type[TractAgent]:
-      population = int(tract.population * self.PERC_POPULATION)  # Final simulation has to be made with PERC_POPULATION = 1
+      population = int(tract.population * self.population_percentage)  # Final simulation has to be made with POPULATION = 1
       coords = (
         gpd.GeoSeries(tract.geometry)
         .sample_points(population)

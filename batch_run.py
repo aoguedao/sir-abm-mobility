@@ -52,6 +52,7 @@ if __name__ == '__main__':
     "percentage_time_at_home_filepath": percentage_time_at_home_filepath,
     "flow_path": flow_path,
     "epsg": epsg,
+    "population_percentage": 1.0
   }
 
   results = mesa.batch_run(

@@ -166,11 +166,14 @@ class PersonAgent(mg.GeoAgent):
         self.move_to_next_tract()
 
   def move_to_next_tract(self, method='uniform'):
-    next_tract_code = self.tract.choose_next_tract_code()
-    self.tract = self.model.code_tract_dict[next_tract_code]
-    next_pos = self.tract.sample_points(n=1, method=method).iat[0]
-    self.geometry = next_pos
-    self.n_trips -= 1
+    if self.n_trips > 0:
+      next_tract_code = self.tract.choose_next_tract_code()
+      self.tract = self.model.code_tract_dict[next_tract_code]
+      next_pos = self.tract.sample_points(n=1, method=method).iat[0]
+      self.geometry = next_pos
+      self.n_trips -= 1
+    else:
+      pass
 
   def move_to_home(self):
     self.geometry = self.home_pos
