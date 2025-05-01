@@ -5,6 +5,7 @@ import mesa
 import pandas as pd
 import geopandas as gpd
 
+from datetime import date
 from pathlib import Path
 
 from sir_abm_mobility.model import GeoSIR
@@ -17,7 +18,6 @@ data_path = Path(__file__).resolve().parent / 'data'
 images_path = Path(__file__).resolve().parent / 'images'
 images_path.mkdir(exist_ok=True)
 flow_path = data_path / 'flow'
-
 tracts_filepath = data_path / 'tracts.shp'
 agents_tract_filepath = data_path / 'agents_tract.csv'
 prob_stay_at_home_filepath = data_path / 'agents_home.csv'
@@ -37,6 +37,9 @@ initial_condition = {
 exposure_distance = 100
 avg_trips = 2.6
 
+min_date = date(year=2020, month=3, day=1)
+max_date = date(year=2020, month=5, day=31)
+
 model = GeoSIR(
   infection_params=infection_params,
   initial_condition=initial_condition,
@@ -47,9 +50,12 @@ model = GeoSIR(
   prob_stay_at_home_filepath=prob_stay_at_home_filepath,
   percentage_time_at_home_filepath=percentage_time_at_home_filepath,
   flow_path=flow_path,
+  min_date=min_date,
+  max_date=max_date,
   epsg=epsg
 )
 # %%
+MAX_STEPS = 2
 for _ in range(MAX_STEPS):
   model.step()
 
