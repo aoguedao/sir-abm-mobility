@@ -4,10 +4,10 @@
 #SBATCH --output sir_abm_mobility_%j.out
 #SBATCH --error sir_abm_mobility_%j.err
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=48
-#SBATCH --mem-per-cpu=4GB
+#SBATCH --cpus-per-task=30
+#SBATCH --mem-per-cpu=6GB
 #SBATCH --export=ALL
-#SBATCH --time=0-12:00:00
+#SBATCH --time=1-12:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=aogueda@gmu.edu
 

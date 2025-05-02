@@ -15,15 +15,11 @@ class GeoSIR(mesa.Model):
 
   def __init__(
     self,
+    data_path: str,
     infection_params: dict,
     initial_condition: dict,
     exposure_distance: float,
     avg_trips: float,
-    tracts_filepath: Path,
-    agents_tract_filepath: Path,
-    prob_stay_at_home_filepath: Path,
-    percentage_time_at_home_filepath: Path,
-    flow_path: Path,
     epsg: int = 3857,
     min_date: date = None,
     max_date: date = None,
@@ -33,19 +29,20 @@ class GeoSIR(mesa.Model):
   ):
     # super().__init__(seed=seed)
     super().__init__(rng=rng)
+    self.data_path = Path(data_path)
+    self.tracts_filepath = self.data_path / 'tracts.shp'
+    self.agents_tract_filepath = self.data_path / 'agents_tract.csv'
+    self.prob_stay_at_home_filepath = self.data_path / 'agents_home.csv'
+    self.percentage_time_at_home_filepath = self.data_path / 'agents_percentage_home.csv'
+    self.flow_path = self.data_path / 'flow'
     self.infect_params = infection_params
-    self.initial_condition = initial_condition
+    self.initial_condition = {InfecStatus[status]: v for status, v in initial_condition.items()}
     self.recovery_steps = 1 / (self.infect_params['gamma'] * len(TimeBlock))
     self.exposure_distance = exposure_distance
     self.avg_trips = avg_trips
-    self.tracts_filepath = tracts_filepath
-    self.agents_tract_filepath = agents_tract_filepath
-    self.prob_stay_at_home_filepath = prob_stay_at_home_filepath
-    self.percentage_time_at_home_filepath = percentage_time_at_home_filepath
-    self.flow_path = flow_path
     self.epsg = epsg
-    self.min_date = min_date if min_date is not None else date.min
-    self.max_date = max_date if max_date is not None else date.max
+    self.min_date = datetime.strptime(min_date, "%Y/%m/%d").date() if min_date is not None else date.min
+    self.max_date = datetime.strptime(max_date, "%Y/%m/%d").date() if max_date is not None else date.max
     self.start_date = None
     self.end_date = None
     self.today = None
@@ -64,9 +61,9 @@ class GeoSIR(mesa.Model):
       model_reporters={
         'date': 'today',
         'time_block': 'time_block',
-        'S': lambda m: m.counts[InfecStatus.S],
-        'I': lambda m: m.counts[InfecStatus.I],
-        'R': lambda m: m.counts[InfecStatus.R],
+        'S': self.get_agents_S,
+        'I': self.get_agents_I,
+        'R': self.get_agents_R,
       }
     )
     self.init_time()
@@ -76,7 +73,7 @@ class GeoSIR(mesa.Model):
     print("Model ready!")
 
   def step(self):
-    print(f'step {self.steps}')
+    print(f'Step {self.steps}: {self.today} - {self.time_block}')
     # Pre-step
     self.reset_counts()
     self.agents_by_type[TractAgent].do('pre_step')
@@ -209,6 +206,15 @@ class GeoSIR(mesa.Model):
         self.agents_by_type[TractAgent].do('update_data')
     self.time_block = self.time_block.next()  # Next TimeBlock
 
-
   def get_tract_id(self, code):
     return self.tract_code_to_id_dict[code]
+
+
+  def get_agents_S(self):
+    return self.counts[InfecStatus.S]
+
+  def get_agents_I(self):
+    return self.counts[InfecStatus.I]
+
+  def get_agents_R(self):
+    return self.counts[InfecStatus.R]
