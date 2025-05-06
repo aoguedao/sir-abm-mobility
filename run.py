@@ -29,7 +29,7 @@ initial_condition = {
   "I": 0.01,
   "R": 0.00
 }
-exposure_distance = 100
+exposure_distance = 50
 avg_trips = 2.6
 
 min_date = "2020/03/01"
@@ -48,7 +48,7 @@ model = GeoSIR(
   epsg=epsg
 )
 # %%
-MAX_STEPS = 2
+MAX_STEPS = 252
 for _ in range(MAX_STEPS):
   model.step()
 

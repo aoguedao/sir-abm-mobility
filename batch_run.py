@@ -53,15 +53,15 @@ if __name__ == '__main__':
     "population_percentage": 1
   }
 
-  MAX_STEPS = 1000
+  MAX_STEPS = 200
 
   results = mesa.batch_run(
     GeoSIR,
     parameters,
-    iterations=2,
+    iterations=5,
     max_steps=MAX_STEPS,
     data_collection_period=1,
-    number_processes=2,
+    number_processes=5,
   )
   today_str = date.today().strftime('%Y%m%d')
   results_df = pd.DataFrame(results)

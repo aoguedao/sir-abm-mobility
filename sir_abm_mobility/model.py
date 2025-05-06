@@ -91,9 +91,8 @@ class GeoSIR(mesa.Model):
         self.agents_by_type[PersonAgent].shuffle_do('move_to_home')
 
     self.datacollector.collect(self)
+    print(self.counts)
     self.update_date_and_timeblock()
-    if (self.today == self.end_date) and (self.time_block is TimeBlock.EVENING):
-      self.running = False  # Stop
 
   def preprocess(self):
     '''
@@ -200,7 +199,9 @@ class GeoSIR(mesa.Model):
   def update_date_and_timeblock(self):
     if self.time_block is TimeBlock.EVENING:
       self.today += timedelta(days=1)  # If evening, update to next day
-      if self.today == self.next_flow_date:  # Check if next flow dataset
+      if self.today == self.end_date:
+        self.running = False  # Stop
+      elif self.today == self.next_flow_date:  # Check if next flow dataset
         self.current_flow_date, self.next_flow_date = next(self.current_next_flow_date_iter)
         self.flow = self._read_flow(self.current_flow_date)
         self.agents_by_type[TractAgent].do('update_data')
