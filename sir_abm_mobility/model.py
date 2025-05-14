@@ -37,7 +37,7 @@ class GeoSIR(mesa.Model):
     self.flow_path = self.data_path / 'flow'
     self.infect_params = infection_params
     self.initial_condition = {InfecStatus[status]: v for status, v in initial_condition.items()}
-    self.recovery_steps = 1 / (self.infect_params['gamma'] * len(TimeBlock))
+    self.recovery_steps = len(TimeBlock) / (self.infect_params['gamma'])
     self.exposure_distance = exposure_distance
     self.avg_trips = avg_trips
     self.epsg = epsg
@@ -73,26 +73,34 @@ class GeoSIR(mesa.Model):
     print("Model ready!")
 
   def step(self):
-    print(f'Step {self.steps}: {self.today} - {self.time_block}')
-    # Pre-step
-    self.reset_counts()
-    self.agents_by_type[TractAgent].do('pre_step')
+    if self.running:
+      print(
+        f"""Step {self.steps} ({self.today} - {self.time_block}) - S: {self.get_agents_S()}, I: {self.get_agents_I()}, R: {self.get_agents_R()}"""
+      )
+      # Pre-step
+      self.reset_counts()
+      self.agents_by_type[TractAgent].do('pre_step')
 
-    # People steps
-    self.agents_by_type[PersonAgent].shuffle_do('step')
+      # People steps
+      self.agents_by_type[PersonAgent].shuffle_do('step')
 
-    # Post-step
-    match self.time_block:
-      case TimeBlock.MORNING:
-        pass
-      case TimeBlock.AFTERNOON:
-        pass
-      case TimeBlock.EVENING:
-        self.agents_by_type[PersonAgent].shuffle_do('move_to_home')
+      # Post-step
+      match self.time_block:
+        case TimeBlock.MORNING:
+          pass
+        case TimeBlock.AFTERNOON:
+          pass
+        case TimeBlock.EVENING:
+          self.agents_by_type[PersonAgent].shuffle_do('move_to_home')
+          susceptible_people = (
+            self.agents_by_type[PersonAgent]
+            .select(lambda a: a.status is InfecStatus.S)
+          )
+          susceptible_people.shuffle_do('update_infection_status_home')
 
-    self.datacollector.collect(self)
-    print(self.counts)
-    self.update_date_and_timeblock()
+      self.datacollector.collect(self)
+      # print(self.counts)
+      self.update_date_and_timeblock()
 
   def preprocess(self):
     '''
@@ -129,7 +137,7 @@ class GeoSIR(mesa.Model):
 
     # Initializations
     self.start_date = self.flow_dates[0]  # First flow date
-    self.end_date = self.flow_dates[-1]  + timedelta(days=6)  # Last flow date + 1 week
+    self.end_date = min(self.flow_dates[-1]  + timedelta(days=6), self.max_date)  # Last flow date + 1 week
     self.today = self.flow_dates[0]  # Init today
     self.time_block = TimeBlock.MORNING  # Init at morning
     self.current_next_flow_date_iter = iter(zip(self.flow_dates, self.flow_dates[1:]))
@@ -198,13 +206,18 @@ class GeoSIR(mesa.Model):
 
   def update_date_and_timeblock(self):
     if self.time_block is TimeBlock.EVENING:
-      self.today += timedelta(days=1)  # If evening, update to next day
       if self.today == self.end_date:
-        self.running = False  # Stop
-      elif self.today == self.next_flow_date:  # Check if next flow dataset
-        self.current_flow_date, self.next_flow_date = next(self.current_next_flow_date_iter)
-        self.flow = self._read_flow(self.current_flow_date)
-        self.agents_by_type[TractAgent].do('update_data')
+        return
+      else:
+        self.today += timedelta(days=1)  # If evening, update to next day
+        if self.today == self.next_flow_date:  # Check if next flow dataset
+          try:
+            self.current_flow_date, self.next_flow_date = next(self.current_next_flow_date_iter)
+          except StopIteration:
+            self.current_flow_date = self.next_flow_date
+            self.next_flow_date = None
+          self.flow = self._read_flow(self.current_flow_date)
+          self.agents_by_type[TractAgent].do('update_data')
     self.time_block = self.time_block.next()  # Next TimeBlock
 
   def get_tract_id(self, code):

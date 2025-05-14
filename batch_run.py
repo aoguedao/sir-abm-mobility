@@ -29,23 +29,23 @@ if __name__ == '__main__':
   # Model
   infection_params = {
     'beta': 0.5,
-    'gamma': 1/2
+    'gamma': 1/14
   }
   initial_condition = {
     "S": 0.99,
     "I": 0.01,
     "R": 0.00
   }
-  exposure_distance = 100
+  exposure_distances = [25, 50, 100]
   avg_trips = 2.6
-  min_date = "2020/03/01"
-  max_date = "2020/05/31"
+  min_date = "2019/03/01"
+  max_date = "2019/05/31"
 
   parameters = {
     "data_path": str(data_path),
     "infection_params": [infection_params],
     "initial_condition": [initial_condition],
-    "exposure_distance": exposure_distance,
+    "exposure_distance": exposure_distances,
     "avg_trips": avg_trips,
     "epsg": epsg,
     "min_date": min_date,
@@ -53,17 +53,16 @@ if __name__ == '__main__':
     "population_percentage": 1
   }
 
-  MAX_STEPS = 200
+  MAX_STEPS = 273
 
   results = mesa.batch_run(
     GeoSIR,
     parameters,
-    iterations=5,
+    iterations=10,
     max_steps=MAX_STEPS,
     data_collection_period=1,
-    number_processes=5,
+    number_processes=None,
   )
   today_str = date.today().strftime('%Y%m%d')
   results_df = pd.DataFrame(results)
-  print(results_df.head())
-  results_df.to_csv(output_path / f"results_{today_str}.csv")
+  results_df.to_csv(output_path / f"FINAL_results_{today_str}.csv", index=False)

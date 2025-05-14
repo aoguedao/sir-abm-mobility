@@ -177,14 +177,19 @@ class PersonAgent(mg.GeoAgent):
 
   def move_to_home(self):
     self.geometry = self.home_pos
-    self.update_infection_status()
 
-  def update_infection_status(self):
+  def update_infection_status_home(self):
+    # TODO: No step_in_status addition
+    self.update_infection_status(exposure_distance=10)  # 10 meters at home
+
+  def update_infection_status(self, exposure_distance=None):
+    if exposure_distance is None:
+      exposure_distance = self.model.exposure_distance
     match self.status:
       # Susceptible
       case InfecStatus.S:
         neighbors = self.model.space.get_neighbors_within_distance(
-          self, self.model.exposure_distance
+          self, exposure_distance
         )
         for neighbor in neighbors:
           if (

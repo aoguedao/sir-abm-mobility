@@ -1,18 +1,17 @@
-# %%
+import matplotlib
+matplotlib.use("Agg")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import mesa
 import pandas as pd
 import geopandas as gpd
-
 from datetime import date
 from pathlib import Path
 
 from sir_abm_mobility.model import GeoSIR
 from sir_abm_mobility.utils import InfecStatus
 
-
-MAX_STEPS = 30
 
 data_path = Path(__file__).resolve().parent / 'data'
 images_path = Path(__file__).resolve().parent / 'images'
@@ -34,7 +33,7 @@ avg_trips = 2.6
 
 min_date = "2020/03/01"
 max_date = "2020/05/31"
-population_percentage = 0.1
+population_percentage = 0.01
 
 model = GeoSIR(
   data_path=str(data_path),
@@ -47,11 +46,11 @@ model = GeoSIR(
   population_percentage=population_percentage,
   epsg=epsg
 )
-# %%
-MAX_STEPS = 252
+
+MAX_STEPS = 273
 for _ in range(MAX_STEPS):
   model.step()
 
 result_df = model.datacollector.get_model_vars_dataframe()
 print(result_df)
-# %%
+
